@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const feedRoutes = require('./routes/posts');
+const postsRoutes = require('./routes/posts');
 
 const app = express();
 
@@ -13,6 +13,6 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use('/feed', feedRoutes);
+app.use('/posts', postsRoutes);
 
 app.listen(8080);
