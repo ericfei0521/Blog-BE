@@ -1,0 +1,27 @@
+{
+    "name": "nodej-practice",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "nodemon app.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ericfei0521/NodeJ-practice.git"
+    },
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/ericfei0521/NodeJ-practice/issues"
+    },
+    "homepage": "https://github.com/ericfei0521/NodeJ-practice#readme",
+    "dependencies": {
+        "body-parser": "^1.20.2",
+        "express": "^4.19.2"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.2"
+    }
+}
