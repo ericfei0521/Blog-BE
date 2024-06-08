@@ -4,8 +4,9 @@ exports.getPosts = (req, res, next) => {
     });
 };
 exports.createPost = (req, res, next) => {
-    const { title, content } = req.body;
+    const { title, content, image } = req.body;
     //update to db
+    console.log(req.body);
     res.status(201).json({
         message: 'create success',
         post: {
