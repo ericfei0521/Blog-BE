@@ -2,8 +2,10 @@ const { validationResult } = require('express-validator');
 const Post = require('../models/post');
 
 exports.getPosts = (req, res, next) => {
-    res.status(200).json({
-        posts: [{ title: 'firstPost', content: 'test post', imageUrl: 'images/tree.jpg' }],
+    Post.find().then((result) => {
+        res.status(200).json({
+            posts: result,
+        });
     });
 };
 exports.createPost = (req, res, next) => {
@@ -29,6 +31,25 @@ exports.createPost = (req, res, next) => {
         })
         .catch((err) => {
             if (err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+};
+exports.getPost = (req, res, next) => {
+    const postId = req.params.postId;
+    Post.findById(postId)
+        .then((result) => {
+            if (!result) {
+                const error = new Error('Not such post');
+                error.statusCode = 404;
+                throw error;
+            } else {
+                res.status(200).json(result);
+            }
+        })
+        .catch((err) => {
+            if (err.statusCode !== 404) {
                 err.statusCode = 500;
             }
             next(err);
