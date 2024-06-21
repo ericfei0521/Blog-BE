@@ -1,4 +1,5 @@
 const { validationResult } = require('express-validator');
+const { clearImage } = require('../util/index');
 const Post = require('../models/post');
 
 exports.getPosts = (req, res, next) => {
@@ -8,6 +9,7 @@ exports.getPosts = (req, res, next) => {
         });
     });
 };
+
 exports.createPost = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -15,12 +17,19 @@ exports.createPost = (req, res, next) => {
         error.statusCode = 422;
         throw error;
     }
-    const { title, content, image } = req.body;
+    if (!req.file) {
+        const error = new Error('Validation failed , no image provided');
+        error.statusCode = 422;
+        throw error;
+    }
+    const { title, content } = req.body;
+    const imageUrl = `http://localhost:8080/public/images/${req.file.filename}`;
+
     //update to db
     const post = new Post({
         title: title,
         content: content,
-        imageUrl: image,
+        imageUrl: imageUrl,
     });
     post.save()
         .then((result) => {
@@ -50,6 +59,48 @@ exports.getPost = (req, res, next) => {
         })
         .catch((err) => {
             if (err.statusCode !== 404) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+};
+
+exports.updatePost = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        const error = new Error('Validation failed , entered data is incorrect');
+        error.statusCode = 422;
+        throw error;
+    }
+    const postId = req.params.postId;
+    console.log(postId);
+    const { title, content } = req.body;
+    let imageUrl = req.body.imageUrl;
+    console.log('reqfile', req.file);
+    if (req.file) {
+        imageUrl = `http://localhost:8080/public/images/${req.file.filename}`;
+    }
+    Post.findById(postId)
+        .then((post) => {
+            if (!post) {
+                const error = new Error('no such post');
+                error.statusCode = 404;
+                throw error;
+            }
+            if (imageUrl !== post.imageUrl) {
+                const oldPath = post.imageUrl.replace('http://localhost:8080/', '');
+                clearImage(oldPath);
+            }
+            post.title = title;
+            post.content = content;
+            post.imageUrl = imageUrl;
+            return post.save();
+        })
+        .then((result) => {
+            res.status(200).json({ message: 'updateSuccess', post: result });
+        })
+        .catch((err) => {
+            if (err.statusCode) {
                 err.statusCode = 500;
             }
             next(err);
