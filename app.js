@@ -2,6 +2,10 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const swaggerjsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const yaml = require('js-yaml');
+const fs = require('fs');
 const postsRoutes = require('./routes/posts');
 const mongoose = require('mongoose');
 const env = require('dotenv').config();
@@ -42,15 +46,15 @@ app.use(
 app.use(upload.single('image'));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/public/images', express.static(path.join(__dirname, 'public/images')));
 
-app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET , POST');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type , Authorization');
-    next();
+const swaggerDocument = yaml.load(fs.readFileSync(path.join(__dirname, 'swagger.yaml'), 'utf8'));
+const swaggerSpec = swaggerjsdoc({
+    swaggerDefinition: swaggerDocument,
+    apis: [], // No need to specify paths to JSDoc comments
 });
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+app.use('/public/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/posts', postsRoutes);
 
 app.use((error, req, res, next) => {
