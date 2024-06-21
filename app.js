@@ -33,8 +33,12 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: storage, fileFilter: fileFilter });
 const app = express();
 
-app.options('*', cors());
-app.use(cors());
+app.use(
+    cors({
+        origin: 'http://localhost:3000',
+        optionsSuccessStatus: 200,
+    })
+);
 app.use(upload.single('image'));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
