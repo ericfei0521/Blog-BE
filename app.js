@@ -6,11 +6,13 @@ const swaggerjsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('js-yaml');
 const fs = require('fs');
-const postsRoutes = require('./routes/posts');
 const mongoose = require('mongoose');
-const env = require('dotenv').config();
-const MONGODB_URL = `mongodb+srv://techpit001:${env.parsed.MONGO_PWD}@test01.vj0khtd.mongodb.net/?retryWrites=true&w=majority&appName=test01`;
 const multer = require('multer');
+const env = require('dotenv').config();
+const postsRoutes = require('./routes/posts');
+const authRoutes = require('./routes/auth');
+
+const MONGODB_URL = `mongodb+srv://techpit001:${env.parsed.MONGO_PWD}@test01.vj0khtd.mongodb.net/?retryWrites=true&w=majority&appName=test01`;
 
 const storage = multer.diskStorage({
     destination: './public/images',
@@ -56,6 +58,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/public/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/posts', postsRoutes);
+app.use('/auth', authRoutes);
 
 app.use((error, req, res, next) => {
     console.log(error);

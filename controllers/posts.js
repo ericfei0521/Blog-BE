@@ -3,11 +3,29 @@ const { clearImage } = require('../util/index');
 const Post = require('../models/post');
 
 exports.getPosts = (req, res, next) => {
-    Post.find().then((result) => {
-        res.status(200).json({
-            posts: result,
+    const page = req.query.page || 1;
+    const perPage = 1;
+    let total = 0;
+    Post.find()
+        .countDocuments()
+        .then((count) => {
+            total = count;
+            return Post.find()
+                .skip((page - 1) * perPage)
+                .limit(perPage);
+        })
+        .then((result) => {
+            res.status(200).json({
+                posts: result,
+                total: total,
+            });
+        })
+        .catch((err) => {
+            if (!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
         });
-    });
 };
 
 exports.createPost = (req, res, next) => {
@@ -58,7 +76,7 @@ exports.getPost = (req, res, next) => {
             }
         })
         .catch((err) => {
-            if (err.statusCode !== 404) {
+            if (!err.statusCode) {
                 err.statusCode = 500;
             }
             next(err);
@@ -73,10 +91,8 @@ exports.updatePost = (req, res, next) => {
         throw error;
     }
     const postId = req.params.postId;
-    console.log(postId);
     const { title, content } = req.body;
     let imageUrl = req.body.imageUrl;
-    console.log('reqfile', req.file);
     if (req.file) {
         imageUrl = `http://localhost:8080/public/images/${req.file.filename}`;
     }
@@ -100,7 +116,34 @@ exports.updatePost = (req, res, next) => {
             res.status(200).json({ message: 'updateSuccess', post: result });
         })
         .catch((err) => {
-            if (err.statusCode) {
+            if (!err.statusCode) {
+                err.statusCode = 500;
+            }
+            next(err);
+        });
+};
+
+exports.deletePost = (req, res, next) => {
+    const postId = req.params.postId;
+    Post.findById(postId)
+        .then((post) => {
+            if (!post) {
+                const error = new Error('No such post');
+                error.statusCode = 404;
+                throw error;
+            }
+            if (req.body.imageUrl !== post.imageUrl) {
+                const path = post.imageUrl.replace('http://localhost:8080/', '');
+                clearImage(path);
+            }
+            return Post.findByIdAndDelete(postId);
+        })
+        .then((result) => {
+            console.log(result);
+            return res.status(200).json({ message: 'Post deleted successfully' });
+        })
+        .catch((err) => {
+            if (!err.statusCode) {
                 err.statusCode = 500;
             }
             next(err);
