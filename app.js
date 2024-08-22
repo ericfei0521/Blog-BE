@@ -11,6 +11,7 @@ const multer = require('multer');
 const env = require('dotenv').config();
 const postsRoutes = require('./routes/posts');
 const authRoutes = require('./routes/auth');
+const session = require('express-session');
 
 const MONGODB_URL = `mongodb+srv://techpit001:${env.parsed.MONGO_PWD}@test01.vj0khtd.mongodb.net/?retryWrites=true&w=majority&appName=test01`;
 
@@ -39,12 +40,18 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ storage: storage, fileFilter: fileFilter });
 const app = express();
 
+const allowedOrigin = 'http://localhost:3000';
+
+// Configure CORS
 app.use(
     cors({
-        origin: 'http://localhost:3000',
-        optionsSuccessStatus: 200,
+        origin: allowedOrigin,
+        credentials: true,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        allowedHeaders: 'Content-Type, Authorization',
     })
 );
+
 app.use(upload.single('image'));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));

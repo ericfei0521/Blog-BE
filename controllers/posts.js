@@ -1,10 +1,12 @@
 const { validationResult } = require('express-validator');
 const { clearImage } = require('../util/index');
 const Post = require('../models/post');
+const User = require('../models/user');
+const user = require('../models/user');
 
 exports.getPosts = (req, res, next) => {
     const page = req.query.page || 1;
-    const perPage = 1;
+    const perPage = 10;
     let total = 0;
     Post.find()
         .countDocuments()
@@ -48,12 +50,29 @@ exports.createPost = (req, res, next) => {
         title: title,
         content: content,
         imageUrl: imageUrl,
+        creator: req.userId,
     });
     post.save()
         .then((result) => {
+            console.log('req', req.userId);
+            return User.findById(req.userId);
+        })
+        .then((user) => {
+            if (!user) {
+                const error = new Error('User not found');
+                error.statusCode = 404;
+                throw error;
+            }
+            console.log('user', user);
+            creator = user;
+            user.posts.push(post);
+            return user.save();
+        })
+        .then((result) => {
             res.status(201).json({
-                message: 'create success',
-                post: result,
+                message: 'Create success',
+                post: post,
+                creator: { _id: creator._id, name: creator.name },
             });
         })
         .catch((err) => {
@@ -71,9 +90,12 @@ exports.getPost = (req, res, next) => {
                 const error = new Error('Not such post');
                 error.statusCode = 404;
                 throw error;
-            } else {
-                res.status(200).json(result);
             }
+            const post = { ...result._doc, isAuth: false }; // Use _doc to get plain object
+            if (result.creator.toString() === req.userId) {
+                post.isAuth = true;
+            }
+            res.status(200).json(post);
         })
         .catch((err) => {
             if (!err.statusCode) {
@@ -139,7 +161,14 @@ exports.deletePost = (req, res, next) => {
             return Post.findByIdAndDelete(postId);
         })
         .then((result) => {
-            console.log(result);
+            console.log(req.userId);
+            return User.findById(req.userId);
+        })
+        .then((user) => {
+            user.posts.pull(postId);
+            return user.save();
+        })
+        .then((result) => {
             return res.status(200).json({ message: 'Post deleted successfully' });
         })
         .catch((err) => {
